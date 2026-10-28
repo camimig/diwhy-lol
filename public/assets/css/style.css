@@ -1,0 +1,903 @@
+    html {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 48px 0 0;
+      background: #fff;
+    }
+
+    .gallery {
+      --columns: 4;
+      --gap: 16px;
+
+      position: relative;
+      display: block;
+
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 10px;
+      box-sizing: border-box;
+
+      overflow: visible;
+    }
+
+    .gallery img {
+      position: absolute;
+      display: block;
+      height: auto;
+      margin: 0;
+      border-radius: 4px;
+      box-sizing: border-box;
+      cursor: crosshair;
+    }
+
+    .selection-controls {
+  position: fixed;
+  bottom: 10px;
+  right: 14px;
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
+  font-family: "argent-pixel-cf", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #0000ff;
+}
+
+    .selection-controls button {
+      appearance: none;
+      border: 0;
+      border-radius: 0;
+      margin: 0;
+      padding: 6px 0;
+      background: transparent;
+
+      font: inherit;
+      color: inherit;
+
+      cursor: pointer;
+    }
+
+    .selection-controls button:hover {
+      text-decoration: underline;
+    }
+
+    .selection-controls button:focus-visible {
+      outline: 1px solid #0000ff;
+      outline-offset: 4px;
+    }
+
+    .selection-controls button:disabled {
+      opacity: 0.45;
+      cursor: default;
+      text-decoration: none;
+    }
+
+    .selection-controls [hidden] {
+      display: none;
+    }
+
+    .selection-count {
+      font: inherit;
+    }
+
+    /* Phone-gallery-style selection */
+    .gallery.is-selecting img {
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+      touch-action: manipulation;
+
+      transition: opacity 120ms ease;
+    }
+
+    .gallery.is-selecting img:not(.is-selected) {
+      opacity: 0.6;
+    }
+
+    .gallery.is-selecting img.is-selected {
+      opacity: 1;
+      outline: 3px solid #0000ff;
+      outline-offset: -3px;
+    }
+
+    .gallery.is-selecting img:focus-visible {
+      outline: 3px dashed #0000ff;
+      outline-offset: 3px;
+    }
+
+    /* Wikipedia-style floating category preview */
+    .gallery .category-tooltip {
+      position: absolute;
+      z-index: 9999;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 4px;
+
+      width: max-content;
+      max-width: min(280px, calc(100vw - 24px));
+      padding: 12px 14px;
+      box-sizing: border-box;
+
+      background: #fff;
+      color: #0000ff;
+      border: 1px solid #c9c9c9;
+      border-radius: 7px;
+
+      box-shadow:
+        0 3px 12px rgba(0, 0, 0, 0.12),
+        0 1px 3px rgba(0, 0, 0, 0.06);
+
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+
+      overflow-wrap: anywhere;
+
+      transition:
+        opacity 120ms ease,
+        visibility 120ms ease;
+    }
+
+    .gallery .category-tooltip.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .category-tooltip .tooltip-title {
+      font-family: "argent-pixel-cf", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #0000ff;
+      margin: 0;
+    }
+
+    .category-tooltip .tooltip-description {
+      font-family: "argent-pixel-cf", sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #0000ff;
+    }
+
+    .gallery.is-selecting .category-tooltip {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .gallery {
+        --columns: 3;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .gallery {
+        --columns: 2;
+        --gap: 12px;
+      }
+
+      .selection-controls {
+        right: 10px;
+        gap: 12px;
+      }
+
+      .gallery .category-tooltip {
+        max-width: min(240px, calc(100vw - 24px));
+        padding: 9px 11px;
+      }
+
+
+/* Tooltip for "make my own!" — matches category tooltips */
+.make-own-tooltip {
+  position: fixed;
+  z-index: 10001;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 12px 14px;
+  box-sizing: border-box;
+
+  background: #fff;
+  color: #0000ff;
+  border: 1px solid #c9c9c9;
+  border-radius: 7px;
+
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+
+  font-family: "argent-pixel-cf", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  overflow-wrap: anywhere;
+
+  transition:
+    opacity 120ms ease,
+    visibility 120ms ease;
+}
+
+
+.make-own-tooltip.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 600px) {
+  .make-own-tooltip {
+    max-width: min(240px, calc(100vw - 24px));
+    padding: 9px 11px;
+    font-size: 9px;
+    line-height: 1.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .make-own-tooltip {
+    transition: none;
+  }
+}
+
+@media print {
+  .make-own-tooltip {
+    display: none !important;
+  }
+}
+
+
+      .category-tooltip .tooltip-title {
+        font-size: 11px;
+      }
+
+      .category-tooltip .tooltip-description {
+        font-size: 9px;
+        line-height: 1.4;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .gallery .category-tooltip,
+      .gallery.is-selecting img {
+        transition: none;
+      }
+    }
+    /* Match the existing "make my own!" button */
+.corner-button {
+  position: fixed;
+  top: 10px;
+  z-index: 10000;
+
+  appearance: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 6px 0;
+  background: transparent;
+
+  font-family: "argent-pixel-cf", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #0000ff;
+
+  cursor: pointer;
+}
+
+.corner-button,
+.selection-controls button {
+  text-shadow:
+    0 0 6px rgba(0, 0, 255, 0.55),
+    0 0 12px rgba(0, 0, 255, 0.35);
+}
+
+
+#about-button {
+  left: 14px;
+}
+
+#print-button {
+  right: 14px;
+}
+
+.corner-button:hover {
+  text-decoration: underline;
+}
+
+.corner-button:focus-visible {
+  outline: 1px solid #0000ff;
+  outline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  #about-button {
+    left: 10px;
+  }
+
+  #print-button {
+    right: 10px;
+  }
+}
+
+/* Keep the controls and tooltips off the printed page */
+@media print {
+  .corner-button,
+  .selection-controls,
+  .gallery .category-tooltip {
+    display: none !important;
+  }
+}
+
+#site-title {
+  left: 50%;
+  transform: translateX(-50%);
+
+  cursor: default;
+  user-select: none;
+  pointer-events: none;
+}
+
+#site-title:hover {
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  #site-title {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+/* About panel */
+#about-dialog {
+  position: fixed;
+  inset: 0;
+
+  width: min(1500px, calc(100vw - 20px));
+  max-width: none;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+
+  margin: auto;
+  padding: 0;
+  box-sizing: border-box;
+
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+
+  background: transparent; /* remove the extra white block */
+  color: #0000ff;
+
+  font-family: "argent-pixel-cf", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#about-dialog::backdrop {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+/* Prevent the gallery behind the panel from scrolling */
+html.about-open,
+html.about-open body {
+  overflow: hidden;
+}
+
+.about-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+
+  display: flex;
+  justify-content: flex-end;
+
+  padding: 12px 24px;
+  background: transparent;
+}
+
+#close-about {
+  appearance: none;
+  margin: 0;
+  padding: 6px 0;
+
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+#close-about:hover {
+  text-decoration: underline;
+}
+
+#close-about:focus-visible {
+  outline: 1px solid #0000ff;
+  outline-offset: 4px;
+}
+
+.about-content {
+  padding: 8px 32px 32px;
+}
+
+.about-content h1 {
+  margin: 0 0 28px;
+
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.about-content p {
+  margin: 0 0 22px;
+}
+
+.about-content p:last-child {
+  margin-bottom: 0;
+}
+
+.about-categories {
+  margin-top: 36px;
+}
+
+.about-category-name {
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  #about-dialog {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  .about-header {
+    padding: 10px 18px;
+  }
+
+  .about-content {
+    padding: 8px 18px 24px;
+  }
+}
+
+@media print {
+  #about-dialog {
+    display: none !important;
+  }
+}
+.about-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.about-link:hover {
+  text-decoration: underline;
+}
+
+.about-link:focus-visible {
+  outline: 1px solid #0000ff;
+  outline-offset: 3px;
+}
+
+#about-dialog .about-content {
+  max-width: 600px;
+  margin: left;
+}
+
+#print-dialog {
+  position: fixed;
+  inset: 0;
+
+  width: min(1500px, calc(100vw - 20px));
+  max-width: none;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+
+  margin: auto;
+  padding: 0;
+  box-sizing: border-box;
+
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+
+  background: transparent;
+  color: #0000ff;
+
+  font-family: "argent-pixel-cf", sans-serif;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#print-dialog::backdrop {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+html.print-open,
+html.print-open body {
+  overflow: hidden;
+}
+
+.print-photos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.print-photos img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+  .print-photos {
+    grid-template-columns: 1fr;
+  }
+}
+
+#print-dialog {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+#close-print {
+  appearance: none;
+  margin: 0;
+  padding: 6px 0;
+
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+#close-print:hover {
+  text-decoration: underline;
+}
+
+#close-print:focus-visible {
+  outline: 1px solid #0000ff;
+  outline-offset: 4px;
+}
+
+.print-photos {
+  display: block;
+  margin-top: 0;
+}
+
+.print-photos img {
+  display: none;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(100vh - 200px);
+  max-height: calc(100dvh - 200px);
+  margin: 0 auto;
+}
+
+.print-photos img.is-current {
+  display: block;
+}
+
+.print-arrow,
+.print-counter {
+  position: fixed;
+  z-index: 10;
+
+  font: inherit;
+  font-size: 18px;
+  line-height: 1.4;
+  color: #0000ff;
+}
+
+.print-arrow {
+  top: 50%;
+  transform: translateY(-50%);
+
+  appearance: none;
+  margin: 0;
+  padding: 12px 14px;
+
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.print-arrow-prev {
+  left: 4px;
+}
+
+.print-arrow-next {
+  right: 4px;
+}
+
+.print-arrow:hover {
+  text-decoration: underline;
+}
+
+.print-arrow:focus-visible {
+  outline: 1px solid #0000ff;
+  outline-offset: 4px;
+}
+
+.print-counter {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.print-text {
+  max-width: 600px;
+  margin: 0 0 28px;
+}
+
+.print-text p {
+  margin: 0 0 22px;
+}
+
+.print-text p:last-child {
+  margin-bottom: 0;
+}
+
+.print-text em {
+  font-style: italic;
+}
+
+/* Print: texto à esquerda, fotos à direita */
+.print-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 48px;
+}
+
+.print-layout .print-text {
+  flex: 0 0 min(600px, 45%);
+  max-width: 600px;
+  margin: 0;
+}
+
+.print-layout .print-photos {
+  flex: 1 1 0;
+  min-width: 0;
+  position: sticky;
+  top: 56px;
+}
+
+.print-layout .print-photos img {
+  max-height: calc(100vh - 160px);
+  max-height: calc(100dvh - 160px);
+}
+
+.print-layout .print-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.print-layout .print-arrow-prev { left: 0; }
+.print-layout .print-arrow-next { right: 0; }
+
+.print-layout .print-counter {
+  position: static;
+  transform: none;
+  margin-top: 12px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .print-layout {
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .print-layout .print-text {
+    flex: none;
+    max-width: 600px;
+  }
+
+  .print-layout .print-photos {
+    position: relative;
+    top: 0;
+    width: 100%;
+  }
+}
+/* Print: altura fixa para o layout não mudar entre fotos verticais e horizontais */
+.print-layout .print-photos img {
+  width: 100%;
+  height: calc(100vh - 200px);
+  height: calc(100dvh - 200px);
+  max-height: none;
+  object-fit: contain;      /* a imagem inteira cabe, sem cortar */
+  object-position: center;  /* fica centrada na caixa */
+}
+
+/* As setas ficam sempre a meio da caixa fixa */
+.print-layout .print-arrow {
+  top: calc((100vh - 200px) / 2);
+  top: calc((100dvh - 200px) / 2);
+}
+
+@media (max-width: 900px) {
+  .print-layout .print-photos img {
+    height: 60vh;
+    height: 60dvh;
+  }
+
+  .print-layout .print-arrow {
+    top: 30vh;
+    top: 30dvh;
+  }
+}
+/* Title inside the print text: same weight as the title in "about" */
+.print-text .work-title {
+  font-weight: 600;
+  font-style: italic;
+}
+/* About: text on the left, GIFs on the right */
+#about-dialog .about-content.about-layout {
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(0, 600px) minmax(0, 1fr);
+  column-gap: 48px;
+  align-items: start;
+}
+
+/* everything except the gifs goes in the left column */
+.about-layout > *:not(.about-gifs) {
+  grid-column: 1;
+}
+
+.about-gifs {
+  grid-column: 2;
+  grid-row: 1 / span 99;
+  align-self: start;
+
+  position: sticky;      /* stays visible while the text scrolls */
+  top: 56px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.about-gifs img {
+  display: block;
+  width: 100%;
+  height: calc(120vh - 140px);
+  height: calc(120dvh - 140px);
+  max-height: none;
+  object-fit: contain;      /* a GIF inteira cabe, sem cortar */
+  object-position: left left;
+  border-radius: 4px;
+}
+
+/* On narrow screens: single column, GIFs below the text */
+@media (max-width: 900px) {
+  #about-dialog .about-content.about-layout {
+    display: block;
+  }
+
+  .about-gifs {
+    position: static;
+    margin-top: 28px;
+  }
+
+  .about-gifs img {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+/* Cruz de fechar maior (about e print) */
+#close-about,
+#close-print {
+  font-size: 25px;
+  line-height: 1;
+  padding: 6px 4px;
+}
+
+#close-about,
+#close-print {
+  position: relative;
+  top: 40px;
+}
+/* Esconde a galeria até o primeiro layout estar pronto */
+.gallery:not(.is-ready) img {
+  visibility: hidden;
+}
+
+/* GIF do about: nunca mais alta que o ecrã */
+.about-gifs img {
+  width: 100%;
+  height: auto;
+  max-height: calc(120vh - 140px);
+
+  object-fit: contain;
+  object-position: left left;
+}
+
+/* Ecrãs pequenos */
+@media (max-width: 900px) {
+  /* a cruz volta ao sítio normal e o cabeçalho ganha fundo,
+     para o texto não passar por baixo dela */
+  .about-header {
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  #close-about,
+  #close-print {
+    top: 0;
+  }
+
+  .about-gifs img {
+    max-height: 70vh;
+    max-height: 70dvh;
+  }
+}
+/* Brilho branco em about, print, make my own e DIWHY.lol */
+.corner-button,
+.selection-controls button {
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.95),
+    0 0 12px rgba(255, 255, 255, 0.8),
+    0 0 18px rgba(255, 255, 255, 0.6);
+}
+/* Justificar o texto do About */
+#about-dialog .about-content p,
+#about-dialog .about-content section,
+#about-dialog .about-content li {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+/* Justificar o texto do Print */
+#print-dialog p,
+#print-dialog .print-content p,
+#print-dialog .print-content section {
+  text-align: justify;
+  text-justify: inter-word;
+}

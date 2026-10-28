@@ -1,0 +1,13 @@
+# Local system files
+.DS_Store
+Thumbs.db
+
+# Source and deployment archives
+*.zip
+
+# Local dependencies, credentials, and Cloudflare state
+node_modules/
+.env
+.env.*
+!.env.example
+.wrangler/
