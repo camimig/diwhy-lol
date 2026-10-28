@@ -50,9 +50,39 @@ existing external services, so fonts and ZIP downloads require internet access.
 
 ## Deploy to Cloudflare Pages
 
-Deploy **`public/`**, which contains the complete website. With Node.js installed
-and Wrangler authenticated to the Cloudflare account that owns the `diwhy`
-project:
+### Automatic deployment
+
+The [deployment workflow](.github/workflows/deploy.yml) deploys `public/` to the
+existing **diwhy** Cloudflare Pages project when site files change on `main`.
+Changes to the workflow also trigger a deployment; documentation-only changes do
+not. There is no build step.
+
+The workflow requires two
+[GitHub Actions repository secrets](https://github.com/camimig/diwhy-lol/settings/secrets/actions):
+
+- `CLOUDFLARE_ACCOUNT_ID`: the Cloudflare account ID for the existing `diwhy`
+  project (`59ce6a5bb4e0bff538f2f742cf3b876f`).
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token with **Account → Cloudflare Pages
+  → Edit**, restricted to that account. Create it in
+  [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens), then
+  save its value directly in the GitHub secret.
+
+Once configured, push site changes to `main` and follow progress in
+[GitHub Actions](https://github.com/camimig/diwhy-lol/actions/workflows/deploy.yml).
+To deploy manually or retry after updating secrets, select **Run workflow** on
+that page with the `main` branch selected. Successful deployments update
+<https://diwhy.lol/> and <https://www.diwhy.lol/>.
+
+Deployments run one at a time. The current deployment finishes before a newer
+one begins. A failed deployment leaves the last successful version live.
+
+See Cloudflare's
+[continuous integration guide](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/).
+
+### Manual deployment
+
+With Node.js installed and Wrangler authenticated to the Cloudflare account that
+owns the `diwhy` project:
 
 ```sh
 npx wrangler pages deploy public --project-name=diwhy --branch=main
@@ -61,7 +91,3 @@ npx wrangler pages deploy public --project-name=diwhy --branch=main
 Alternatively, upload the `public/` folder in the existing Pages project's
 dashboard. For ZIP uploads, archive the **contents** of `public/` so `index.html`
 is at the archive root.
-
-Automatic deployment is not configured in this repository yet. A future CI
-workflow should deploy `public/` with no build command. See Cloudflare's
-[continuous integration guide](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/).
