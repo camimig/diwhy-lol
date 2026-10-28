@@ -42,12 +42,29 @@
         img.classList.toggle("is-current", n === current);
       });
 
+      if (printDialog.open) {
+        // Fetch the current photo first, then the two adjacent slides.
+        [current, (current + 1) % photos.length,
+          (current + photos.length - 1) % photos.length].forEach((n) => {
+          const img = photos[n];
+          img.fetchPriority = n === current ? "high" : "low";
+          if (!img.hasAttribute("data-src")) return;
+          img.src = img.getAttribute("data-src");
+          img.removeAttribute("data-src");
+        });
+      }
+
       counter.textContent =
         `${pad(current + 1)}/${pad(photos.length)}`;
     }
 
     prev.addEventListener("click", () => show(current - 1));
     next.addEventListener("click", () => show(current + 1));
+
+    const printButton = document.getElementById("print-button");
+    if (printButton) {
+      printButton.addEventListener("click", () => show(current));
+    }
 
     printDialog.addEventListener("keydown", (event) => {
       if (event.key === "ArrowLeft") {

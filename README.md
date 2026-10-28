@@ -22,6 +22,8 @@ public/                     Deploy this folder
       <category>/           Gallery images, grouped by their original category
       print/                Publication photographs
       ezgif-maker.webp      About animation
+tools/
+  update_image_metadata.py   Refresh image dimensions and loading hints
 ```
 
 ## Preview locally
@@ -44,6 +46,30 @@ Open <http://localhost:8000>. Stop the server with Ctrl+C.
   supplies the category name used by tooltips and ZIP downloads.
 - Edit tooltip descriptions in `public/assets/js/gallery.js` and the corresponding
   category text in the About section of `public/index.html`.
+
+After adding or replacing images, refresh their dimensions and loading hints:
+
+```sh
+python3 -m pip install Pillow  # Once, if Pillow is not installed
+python3 tools/update_image_metadata.py
+```
+
+Commit the updated `public/index.html` along with the images. The script reads
+image metadata without changing the image files. This is an editing helper;
+deployment still uploads the committed `public/` folder without a build step.
+
+### Image loading
+
+The gallery uses the recorded dimensions to reserve each image's position before
+it downloads. The first four images load immediately; the rest use `data-src`
+and load when their positioned boxes are within one viewport height of the
+screen. Images are revealed when loaded without moving the surrounding images.
+Infinite scrolling appends 48 repeated images at a time near the bottom.
+
+The About animation loads when About opens. Print photos load when Print opens,
+starting with the current photo and its two neighbours; other slides stay
+deferred until navigation approaches them. ZIP downloads continue to use the
+existing image files.
 
 The site is static and has no build step. Adobe Fonts and JSZip load from their
 existing external services, so fonts and ZIP downloads require internet access.

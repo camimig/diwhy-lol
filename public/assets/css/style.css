@@ -33,6 +33,11 @@
       border-radius: 4px;
       box-sizing: border-box;
       cursor: crosshair;
+      visibility: hidden;
+    }
+
+    .gallery img.is-loaded {
+      visibility: visible;
     }
 
     .selection-controls {

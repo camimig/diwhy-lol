@@ -12,6 +12,11 @@
       aboutButton.addEventListener("click", () => {
         if (aboutDialog.open) return;
 
+        aboutDialog.querySelectorAll("img[data-src]").forEach((img) => {
+          img.src = img.getAttribute("data-src");
+          img.removeAttribute("data-src");
+        });
+
         aboutDialog.showModal();
         aboutDialog.scrollTop = 0;
 
