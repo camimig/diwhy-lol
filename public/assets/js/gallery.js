@@ -8,6 +8,21 @@
 
       const originalImages = Array.from(gallery.querySelectorAll("img"));
       const selected = new Set();
+      const repeatBatchSize = 48;
+      let nextRepeatIndex = 0;
+
+      // Observe only after masonry has assigned every image a real position.
+      const imageObserver = "IntersectionObserver" in window
+        ? new IntersectionObserver((entries) => {
+            entries
+              .filter((entry) => entry.isIntersecting)
+              .sort((a, b) =>
+                a.boundingClientRect.top - b.boundingClientRect.top ||
+                a.boundingClientRect.left - b.boundingClientRect.left
+              )
+              .forEach(({ target }) => loadImage(target));
+          }, { rootMargin: `${window.innerHeight}px 0px` })
+        : null;
 
       let frame;
       let isAppending = false;
@@ -112,8 +127,36 @@
 
       // Selection
 
+      function imageSource(img) {
+        return img.getAttribute("data-src") || img.getAttribute("src");
+      }
+
+      function loadImage(img) {
+        if (!img.hasAttribute("data-src")) return;
+
+        // The observer has already applied our preload distance.
+        img.loading = "eager";
+        img.src = img.getAttribute("data-src");
+        img.removeAttribute("data-src");
+        if (imageObserver) imageObserver.unobserve(img);
+      }
+
+      function observeImage(img) {
+        if (img.complete && img.naturalWidth) {
+          img.classList.add("is-loaded");
+        }
+
+        if (!img.hasAttribute("data-src")) return;
+        if (imageObserver) {
+          imageObserver.observe(img);
+        } else {
+          // Older browsers still get a working gallery.
+          loadImage(img);
+        }
+      }
+
       function imageKey(img) {
-        return new URL(img.getAttribute("src"), document.baseURI).href;
+        return new URL(imageSource(img), document.baseURI).href;
       }
 
       function syncImage(img) {
@@ -413,7 +456,7 @@
       function attachTooltip(img) {
         if (img._categoryTooltip) return;
 
-        const src = img.getAttribute("src") || "";
+        const src = imageSource(img) || "";
         const folder = src.split("/").slice(-2)[0];
 
         let categoryKey = folder;
@@ -466,6 +509,7 @@
         });
 
         img.addEventListener("focus", () => {
+          loadImage(img);
           showTooltip(img, tooltip, null);
         });
 
@@ -535,8 +579,6 @@ makeButton.addEventListener("blur", () => {
       // Masonry layout
 
       function layoutMasonry() {
-        gallery.classList.add("is-ready");
-
         const styles = getComputedStyle(gallery);
 
         const columns =
@@ -562,27 +604,19 @@ makeButton.addEventListener("blur", () => {
         const images = Array.from(gallery.querySelectorAll("img"));
 
         images.forEach((img) => {
-          img.style.width = img.classList.contains("small")
-            ? `${columnWidth * 0.88}px`
-            : `${columnWidth}px`;
-        });
-
-        images.forEach((img) => {
-          if (!img.naturalWidth || !img.naturalHeight) {
-            img.style.visibility = "hidden";
-            return;
-          }
-
-          img.style.visibility = "";
-
           const column = columnHeights.indexOf(
             Math.min(...columnHeights)
           );
 
-          const imageWidth = img.getBoundingClientRect().width;
-
-          const imageHeight =
-            img.naturalHeight * (imageWidth / img.naturalWidth);
+          const imageWidth = img.classList.contains("small")
+            ? columnWidth * 0.88
+            : columnWidth;
+          const intrinsicWidth = Number(img.getAttribute("width")) || img.naturalWidth;
+          const intrinsicHeight = Number(img.getAttribute("height")) || img.naturalHeight;
+          const ratio = intrinsicWidth && intrinsicHeight
+            ? intrinsicHeight / intrinsicWidth
+            : 1;
+          const imageHeight = imageWidth * ratio;
 
           const left =
             paddingLeft +
@@ -591,6 +625,8 @@ makeButton.addEventListener("blur", () => {
 
           const top = paddingTop + columnHeights[column];
 
+          img.style.width = `${imageWidth}px`;
+          img.style.height = `${imageHeight}px`;
           img.style.left = `${left}px`;
           img.style.top = `${top}px`;
 
@@ -599,13 +635,13 @@ makeButton.addEventListener("blur", () => {
 
         const tallestColumn = Math.max(0, ...columnHeights);
 
-        const hasImages = images.some(
-          (img) => img.naturalWidth && img.naturalHeight
-        );
-
         gallery.style.height =
           `${paddingTop + tallestColumn -
-            (hasImages ? gap : 0) + paddingBottom}px`;
+            (images.length ? gap : 0) + paddingBottom}px`;
+
+        gallery.classList.add("is-ready");
+        images.forEach(observeImage);
+        isAppending = false;
 
         if (
           activeTooltip &&
@@ -619,6 +655,8 @@ makeButton.addEventListener("blur", () => {
             clientY: rect.top
           });
         }
+
+        checkScroll();
       }
 
       function scheduleLayout() {
@@ -628,37 +666,41 @@ makeButton.addEventListener("blur", () => {
 
       // Infinite scrolling
 
-      function appendAnotherSet() {
-        if (isAppending) return;
+      function appendNextBatch() {
+        if (isAppending || originalImages.length === 0) return;
 
         isAppending = true;
 
         try {
           const fragment = document.createDocumentFragment();
 
-          originalImages.forEach((original) => {
-            const clone = original.cloneNode(true);
+          for (let index = 0; index < repeatBatchSize; index++) {
+            const original = originalImages[nextRepeatIndex];
+            nextRepeatIndex = (nextRepeatIndex + 1) % originalImages.length;
+            const clone = original.cloneNode(false);
 
-            clone.style.left = "";
-            clone.style.top = "";
-            clone.style.width = "";
-            clone.style.visibility = "";
+            clone.setAttribute("data-src", imageSource(original));
+            clone.removeAttribute("src");
+            clone.removeAttribute("fetchpriority");
+            clone.loading = "lazy";
+            clone.removeAttribute("style");
 
             clone.removeAttribute("aria-describedby");
             clone.removeAttribute("aria-checked");
             clone.removeAttribute("role");
-            clone.classList.remove("is-selected");
+            clone.classList.remove("is-selected", "is-loaded");
 
             attachTooltip(clone);
             syncImage(clone);
 
             fragment.appendChild(clone);
-          });
+          }
 
           gallery.appendChild(fragment);
           scheduleLayout();
-        } finally {
+        } catch (error) {
           isAppending = false;
+          throw error;
         }
       }
 
@@ -668,12 +710,20 @@ makeButton.addEventListener("blur", () => {
           (window.scrollY + window.innerHeight);
 
         if (remaining < window.innerHeight * 2) {
-          appendAnotherSet();
+          appendNextBatch();
         }
       }
 
-      gallery.addEventListener("load", scheduleLayout, true);
-      gallery.addEventListener("error", scheduleLayout, true);
+      gallery.addEventListener("load", (event) => {
+        const img = event.target;
+        if (img.tagName !== "IMG") return;
+        img.classList.add("is-loaded");
+
+        // Metadata covers the committed images; keep new images usable too.
+        if (!img.hasAttribute("width") || !img.hasAttribute("height")) {
+          scheduleLayout();
+        }
+      }, true);
 
       window.addEventListener("resize", scheduleLayout);
 
@@ -717,5 +767,4 @@ makeButton.addEventListener("blur", () => {
 
       updateControls();
       scheduleLayout();
-      appendAnotherSet();
     })();
